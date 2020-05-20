@@ -1,3 +1,4 @@
 ﻿document.onkeydown = function (event) {
-    console.log("Caiu Aqui");
+    //console.log(event.keyCode);
+    DotNet.invokeMethod("SnakeBlazor", "OnKeyDown", event.keyCode);
 }

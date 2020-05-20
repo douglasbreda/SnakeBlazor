@@ -1,24 +1,150 @@
 ﻿@using Blazor.Extensions.Canvas
 @using Blazor.Extensions.Canvas.Canvas2D
 @using Blazor.Extensions
+@using System.Diagnostics
+@using static Utils.Enums
 
 @page "/"
 
-<BECanvas Width="800" Height="400" @ref="_canvasReference"></BECanvas>
+<BECanvas Width="_width" Height="_height" @ref="_canvasReference"></BECanvas>
+<p> @teste</p>
 
 @code{
-    private Canvas2DContext _context;
+    #region [Properties]
+
+    private const int _height = 400;
+    private const int _width = 800;
+    private static Canvas2DContext _context;
+    private static string teste = "";
+    private const int xCoordinate = 790;
+    private const int yCoordinate = 400;
 
     protected BECanvasComponent _canvasReference;
+    private static int[,] coordinates = new int[xCoordinate, yCoordinate];
+    private static int x = 50;
+    private static int y = 50;
+    private static int movement = 5;
+    private static Direction _direction = Direction.Right;
+    private static bool gameHasStarted = true;
+
+
+    #endregion
+
+    #region [Constructor]
+
+    public Index()
+    {
+        StartDrawingThread();
+    }
+
+    #endregion
+
+    #region [Methods]
+
+    private void StartDrawingThread()
+    {
+        Task.Run( async () =>
+        {
+            if ( gameHasStarted )
+            {
+                while ( true )
+                {
+                    await Task.Delay( 1000 );
+                    MoveSnake();
+                }
+            }
+        } );
+    }
 
     protected override async Task OnAfterRenderAsync( bool firstRender )
     {
-        this._context = await this._canvasReference.CreateCanvas2DAsync();
+        _context = await this._canvasReference.CreateCanvas2DAsync();
 
-        var x = 50;
-        var y = 190;
-
-        await this._context.FillRectAsync( x, y, 10, 10 );
+        await _context.FillRectAsync( x, y, movement, movement );
     }
+
+    /// <summary>
+    /// This event is called through javascript in the file wwwroot/js/JSInterop.js when a
+    /// button is pressed on the page
+    /// </summary>
+    /// <param name="keyCode"></param>
+    [JSInvokable]
+    public static void OnKeyDown( int keyCode )
+    {
+        gameHasStarted = true;
+        switch ( keyCode )
+        {
+            case 87:
+                MoveUp();
+                break;
+            case 65:
+                MoveLeft();
+                break;
+            case 83:
+                MoveDown();
+                break;
+            case 68:
+                MoveRight();
+                break;
+        }
+    }
+
+    private static void MoveSnake()
+    {
+        switch ( _direction )
+        {
+            case Direction.Up:
+                y -= movement;
+                DrawSnake();
+                break;
+            case Direction.Left:
+                x -= movement;
+                DrawSnake();
+                break;
+            case Direction.Down:
+                y += movement;
+                DrawSnake();
+                break;
+            case Direction.Right:
+                x += movement;
+                DrawSnake();
+                break;
+        }
+    }
+
+    private async static void DrawSnake()
+    {
+        await _context.FillRectAsync( x, y, movement, movement );
+    }
+
+    private static void MoveUp()
+    {
+        _direction = Direction.Up;
+        y -= movement;
+        DrawSnake();
+    }
+
+    private static void MoveLeft()
+    {
+        _direction = Direction.Left;
+        x -= movement;
+        DrawSnake();
+    }
+
+    private static void MoveDown()
+    {
+        _direction = Direction.Down;
+        y += movement;
+        DrawSnake();
+    }
+
+    private static void MoveRight()
+    {
+        _direction = Direction.Right;
+        x += movement;
+        DrawSnake();
+    }
+
+    #endregion
 }
 
